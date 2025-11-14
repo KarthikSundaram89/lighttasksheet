@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>LightTaskSheet — Internal</title>
+
+<!-- Minimal attractive CSS (system fonts only, no external requests) -->
+<style>
+:root{
+  --bg:#f6fbff; --card:#ffffff; --muted:#6b7280; --accent:#2563eb;
+  --accent-2:#06b6d4; --border:#e6eef7; --radius:12px; --shadow: 0 8px 24px rgba(16,24,40,0.06);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:14px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: linear-gradient(180deg,#fbfdff,var(--bg)); color:#0f172a;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  line-height:1.35; font-size:15px;
+}
+
+/* App shell */
+.app-header{
+  display:flex; gap:12px; align-items:center; padding:12px 14px; border-radius:var(--radius);
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), var(--card));
+  box-shadow: var(--shadow); border:1px solid var(--border);
+}
+.app-title{ margin:0; font-weight:700; letter-spacing:-0.2px; font-size:1.05rem; }
+.spacer{ flex:1 }
+
+/* Auth controls */
+.auth-row{ display:flex; gap:8px; align-items:center; }
+.auth-row input{ padding:8px 10px; border-radius:8px; border:1px solid #e9f1fb; background:linear-gradient(180deg,#fff,#fbfdff); min-width:120px; }
+.btn{ display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:10px; border:none; cursor:pointer; font-weight:600; }
+.btn.primary{ background:var(--accent); color:white; box-shadow: 0 6px 18px rgba(37,99,235,0.12); }
+.btn.ghost{ background:transparent; color:var(--muted); border:1px solid #edf6fb; }
+.btn.small{ padding:6px 8px; font-size:0.95rem }
+
+/* Controls */
+.controls{ margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.controls .hint{ color:var(--muted); font-size:0.92rem }
+
+/* Card + table */
+.sheet-card{ margin-top:12px; border-radius:12px; background:var(--card); border:1px solid var(--border); box-shadow: var(--shadow); padding:8px; overflow:auto; max-height:72vh; }
+table.sheet{ width:100%; border-collapse:collapse; table-layout:fixed; min-width:640px; font-size:0.96rem; }
+table.sheet th{ text-align:left; padding:10px 12px; background:linear-gradient(180deg,#fbfdff,#f6fbff); color:var(--muted); font-weight:700; font-size:0.88rem; border-bottom:1px solid #eef7fc; }
+table.sheet td{ padding:10px 12px; border-bottom:1px solid #f4f9fd; vertical-align:top; word-break:break-word; }
+td[contenteditable="true"]{ outline:none; min-height:36px; }
+
+/* Hover + selection */
+table.sheet tbody tr:hover td{ background: linear-gradient(0deg, rgba(240,250,255,0.6), rgba(255,255,255,0.6)); }
+
+/* Toast */
+.toast{ position:fixed; top:22px; right:22px; background: #042A65; color:white; padding:10px 14px; border-radius:10px; box-shadow:0 10px 30px rgba(4,42,101,0.18); display:none; align-items:center; gap:10px; z-index:9999; }
+
+/* Responsive */
+@media (max-width:720px){
+  .app-header{ flex-direction:column; align-items:stretch; gap:10px }
+  table.sheet{ min-width:520px }
+}
+</style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header" role="banner">
+    <h1 class="app-title">LightTaskSheet</h1>
+    <div class="spacer" aria-hidden></div>
+
+    <div class="auth-row" aria-label="authentication">
+      <input id="username" placeholder="username" aria-label="username" />
+      <input id="password" placeholder="password" type="password" aria-label="password" />
+      <button id="loginBtn" class="btn primary" title="Login">
+        <!-- lock icon -->
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M17 9V7a5 5 0 0 0-10 0v2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="3" y="9" width="18" height="12" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>
+        Login
+      </button>
+      <button id="registerBtn" class="btn ghost small" title="Register">Register</button>
+      <button id="logoutBtn" class="btn ghost small" style="display:none" title="Logout">Logout</button>
+    </div>
+  </header>
+
+  <!-- Controls -->
+  <div class="controls" role="region" aria-label="controls">
+    <button id="addRowBtn" class="btn small ghost">+ Add row</button>
+    <button id="addColBtn" class="btn small ghost">+ Add column</button>
+    <button id="delColBtn" class="btn small ghost">Delete last column</button>
+    <button id="saveBtn" class="btn primary small" title="Save changes">Save</button>
+
+    <button id="exportBtn" class="btn small ghost">Export JSON</button>
+    <input id="importFile" type="file" accept="application/json" style="display:inline-block" />
+
+    <div class="hint" style="margin-left:auto">Timestamp auto-added on new rows • Shows local time but stores ISO</div>
+  </div>
+
+  <!-- Sheet -->
+  <main class="sheet-card" role="main">
+    <table id="sheetTable" class="sheet" aria-label="task sheet"></table>
+  </main>
+
+  <!-- Toast -->
+  <div id="toast" class="toast" role="status" aria-live="polite">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span id="toastText">Saved ✓</span>
+  </div>
+
+<script>
+/*
+  Single-file UI:
+  - Works with /api/register, /api/login, /api/sheet/:userId
+  - Stores JWT in localStorage as lts_token, username as lts_user
+  - New rows auto stamped with ISO (stored). Display shows friendly local format.
+*/
+
+/* ---- Config ---- */
+const API = '/api';
+const TOKEN_KEY = 'lts_token';
+const USER_KEY = 'lts_user';
+const DEFAULT_COLUMNS = ["Timestamp","Task","Progress"];
+
+/* ---- State ---- */
+let token = localStorage.getItem(TOKEN_KEY) || null;
+let username = localStorage.getItem(USER_KEY) || null;
+let sheet = null;
+
+/* ---- DOM ---- */
+const usernameInput = document.getElementById('username');
+const passwordInput = document.getElementById('password');
+const loginBtn = document.getElementById('loginBtn');
+const registerBtn = document.getElementById('registerBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+
+const addRowBtn = document.getElementById('addRowBtn');
+const addColBtn = document.getElementById('addColBtn');
+const delColBtn = document.getElementById('delColBtn');
+const saveBtn = document.getElementById('saveBtn');
+const exportBtn = document.getElementById('exportBtn');
+const importFile = document.getElementById('importFile');
+
+const sheetTable = document.getElementById('sheetTable');
+const toastEl = document.getElementById('toast');
+const toastText = document.getElementById('toastText');
+
+/* ---- Utilities ---- */
+function nowISO(){ return new Date().toISOString(); }
+function formatLocal(iso){
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    // human-friendly: e.g. "14 Nov 2025, 08:03"
+    return d.toLocaleString(undefined, { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+  } catch(e){ return iso; }
+}
+function showToast(msg='Saved ✓', ms=1400){
+  toastText.textContent = msg;
+  toastEl.style.display = 'flex';
+  clearTimeout(toastEl._timer);
+  toastEl._timer = setTimeout(()=> toastEl.style.display = 'none', ms);
+}
+
+/* Simple API fetch with JWT injection */
+async function apiFetch(path, opts = {}){
+  opts.headers = opts.headers || {};
+  if (!opts.headers['Content-Type']) opts.headers['Content-Type'] = 'application/json';
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+  const res = await fetch(API + path, opts);
+  if (res.status === 401 || res.status === 403){
+    // invalid/expired token
+    alert('Authorization error — please login again.');
+    doLogout();
+    throw new Error('unauthorized');
+  }
+  return res;
+}
+
+/* ---- Auth flow ---- */
+function updateAuthUI(){
+  if (token && username){
+    usernameInput.style.display = 'none';
+    passwordInput.style.display = 'none';
+    loginBtn.style.display = 'none';
+    registerBtn.style.display = 'none';
+    logoutBtn.style.display = '';
+  } else {
+    usernameInput.style.display = '';
+    passwordInput.style.display = '';
+    loginBtn.style.display = '';
+    registerBtn.style.display = '';
+    logoutBtn.style.display = 'none';
+  }
+}
+updateAuthUI();
+
+loginBtn.addEventListener('click', async ()=>{
+  const u = usernameInput.value.trim(); const p = passwordInput.value;
+  if (!u || !p) return alert('username & password required');
+  try {
+    const r = await fetch(API + '/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ username: u, password: p })
+    });
+    const j = await r.json();
+    if (!r.ok) return alert('Login failed: ' + (j.error || r.statusText));
+    token = j.token; username = j.username;
+    localStorage.setItem(TOKEN_KEY, token); localStorage.setItem(USER_KEY, username);
+    updateAuthUI();
+    await loadSheet();
+  } catch (e) {
+    alert('Login error: ' + e.message);
+  }
+});
+
+registerBtn.addEventListener('click', async ()=>{
+  const u = usernameInput.value.trim(); const p = passwordInput.value;
+  if (!u || !p) return alert('username & password required');
+  try {
+    const r = await fetch(API + '/register', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ username: u, password: p })
+    });
+    const j = await r.json();
+    if (!r.ok) return alert('Register failed: ' + (j.error || r.statusText));
+    alert('User created — please login.');
+  } catch (e){ alert('Register error: ' + e.message); }
+});
+
+logoutBtn.addEventListener('click', ()=> doLogout());
+function doLogout(){
+  token = null; username = null;
+  localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY);
+  updateAuthUI();
+  sheet = makeEmptySheet();
+  renderTable();
+}
+
+/* ---- Sheet functions ---- */
+function makeEmptySheet(){ return { columns: DEFAULT_COLUMNS.slice(), rows: [] }; }
+
+async function loadSheet(){
+  if (!username) return alert('Login required to load sheet');
+  const res = await apiFetch(`/sheet/${encodeURIComponent(username)}`);
+  const j = await res.json();
+  sheet = j.sheet || makeEmptySheet();
+  // safety checks
+  if (!Array.isArray(sheet.columns)) sheet.columns = DEFAULT_COLUMNS.slice();
+  if (!Array.isArray(sheet.rows)) sheet.rows = [];
+  renderTable();
+}
+
+async function saveSheet(){
+  if (!username) return alert('Login required to save');
+  try {
+    const res = await apiFetch(`/sheet/${encodeURIComponent(username)}`, {
+      method: 'POST',
+      body: JSON.stringify({ sheet })
+    });
+    const j = await res.json();
+    if (!res.ok) return alert('Save failed: ' + (j.error || res.statusText));
+    showToast('Saved ✓');
+  } catch(e) {
+    console.error(e);
+    alert('Save failed: ' + e.message);
+  }
+}
+
+/* ---- Table rendering ---- */
+function renderTable(){
+  sheetTable.innerHTML = '';
+  // header
+  const thead = document.createElement('thead');
+  const trh = document.createElement('tr');
+  sheet.columns.forEach(c => {
+    const th = document.createElement('th');
+    th.textContent = c;
+    trh.appendChild(th);
+  });
+  thead.appendChild(trh); sheetTable.appendChild(thead);
+
+  // body
+  const tbody = document.createElement('tbody');
+  sheet.rows.forEach((r, ri) => {
+    const tr = document.createElement('tr');
+    sheet.columns.forEach((col, ci) => {
+      const td = document.createElement('td');
+      if (ci === 0) {
+        // display friendly timestamp but keep underlying value
+        td.textContent = r[ci] ? formatLocal(r[ci]) : '';
+        td.setAttribute('data-iso', r[ci] || '');
+      } else {
+        td.contentEditable = true;
+        td.innerText = r[ci] || '';
+        td.addEventListener('input', () => { sheet.rows[ri][ci] = td.innerText; });
+        td.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            sheet.rows[ri][ci] = td.innerText;
+            insertRowAt(ri+1, true);
+            renderTable();
+            focusCell(ri+1, 1);
+          }
+        });
+      }
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  sheetTable.appendChild(tbody);
+}
+
+/* focus helper */
+function focusCell(rowIndex, colIndex){
+  const tbody = sheetTable.querySelector('tbody');
+  if (!tbody) return;
+  const tr = tbody.children[rowIndex];
+  if (!tr) return;
+  const td = tr.children[colIndex];
+  if (!td) return;
+  td.focus();
+  // move caret to end
+  const sel = window.getSelection();
+  sel.selectAllChildren(td);
+  sel.collapseToEnd();
+}
+
+/* row/col operations */
+function insertRowAt(idx, autoStamp=false){
+  const cols = sheet.columns.length;
+  const newRow = Array(cols).fill('');
+  if (autoStamp) newRow[0] = nowISO();
+  sheet.rows.splice(idx, 0, newRow);
+}
+
+addRowBtn.addEventListener('click', ()=> { insertRowAt(sheet.rows.length, true); renderTable(); focusCell(sheet.rows.length-1, 1); });
+addColBtn.addEventListener('click', ()=> {
+  const name = prompt('Column name', 'Progress');
+  if (!name) return;
+  sheet.columns.push(name);
+  sheet.rows.forEach(r => r.push(''));
+  renderTable();
+});
+delColBtn.addEventListener('click', ()=> {
+  if (sheet.columns.length <= 2) return alert('Keep at least Timestamp and Task columns');
+  if (!confirm('Delete the last column for all rows?')) return;
+  sheet.columns.pop();
+  sheet.rows.forEach(r => r.pop());
+  renderTable();
+});
+
+/* export / import */
+exportBtn.addEventListener('click', ()=>{
+  const blob = new Blob([JSON.stringify(sheet, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = `${username || 'sheet'}.json`;
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+});
+
+importFile.addEventListener('change', (ev)=> {
+  const f = ev.target.files[0];
+  if (!f) return;
+  const fr = new FileReader();
+  fr.onload = (e) => {
+    try {
+      const obj = JSON.parse(e.target.result);
+      if (!obj.columns || !obj.rows) throw new Error('invalid sheet format');
+      sheet = obj;
+      renderTable();
+    } catch (err) { alert('Import error: ' + err.message); }
+  };
+  fr.readAsText(f);
+});
+
+/* Save button */
+saveBtn.addEventListener('click', saveSheet);
+
+/* init */
+function init(){
+  sheet = makeEmptySheet();
+  // start with one stamped row for convenience
+  insertRowAt(0, true);
+  renderTable();
+  if (token && username) {
+    updateAuthUI();
+    loadSheet().catch(()=> { doLogout(); });
+  }
+}
+init();
+
+/* expose for debugging (optional) */
+window.LTS = { loadSheet, saveSheet, getState: () => ({username, token, sheet}) };
+
+</script>
+</body>
+</html>
