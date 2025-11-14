@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>LightTaskSheet -- XLSX Export & Shortcuts</title>
+<title>LightTaskSheet -- XLSX Export & Shortcuts (fixed)</title>
 <style>
 :root{
   --bg:#f6fbff; --card:#fff; --muted:#6b7280; --accent:#2563eb; --border:#e6eef7;
@@ -126,12 +126,9 @@ table.sheet td{ padding:10px 12px; border-bottom:1px solid #f4f9fd; vertical-ali
 
 <script>
 /* ============================================================
-   Minimal XLSX (real .xlsx) builder + full UI
-   - XLSX zipped package using STORE method (no compression)
-   - Timestamps exported as TEXT (your choice)
+   Fixed XLSX exporter + full UI
    ============================================================ */
 
-/* ---------- Config & simple utilities ---------- */
 const API = '/api';
 const TOKEN_KEY = 'lts_token', USER_KEY = 'lts_user';
 const PALETTE = ['#ffd8a8','#c6f6d5','#dbeafe','#fde68a','#fbcfe8','#e6e6fa','#d1fae5','#fce7f3'];
@@ -139,7 +136,6 @@ const PALETTE = ['#ffd8a8','#c6f6d5','#dbeafe','#fde68a','#fbcfe8','#e6e6fa','#d
 let token = localStorage.getItem(TOKEN_KEY) || null;
 let username = localStorage.getItem(USER_KEY) || null;
 
-/* initial sheet */
 let sheet = {
   columns: [ {name:'Timestamp',type:'date',color:PALETTE[2]}, {name:'Task',type:'text',color:PALETTE[0]}, {name:'Notes',type:'text',color:PALETTE[1]} ],
   rows: []
@@ -148,9 +144,9 @@ let sheet = {
 function nowISO(){ return new Date().toISOString(); }
 function fmtLocal(iso){ if(!iso) return ''; try { return new Date(iso).toLocaleString(); } catch(e){ return iso; } }
 function uid(){ return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8); }
-function showToast(msg='Saved ✓'){ const t=document.getElementById('toast'); t.textContent = msg; t.style.display='block'; clearTimeout(t._t); t._t = setTimeout(()=> t.style.display='none',1200); }
+function showToast(msg='Saved ✓'){ const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; clearTimeout(t._t); t._t = setTimeout(()=> t.style.display='none',1200); }
 
-/* ---------- Auth UI ---------- */
+/* Auth UI */
 const usernameInput = document.getElementById('username'), passwordInput = document.getElementById('password');
 const loginBtn = document.getElementById('loginBtn'), registerBtn = document.getElementById('registerBtn'), logoutBtn = document.getElementById('logoutBtn');
 const userTag = document.getElementById('userTag'), helpBtn = document.getElementById('helpBtn'), modal = document.getElementById('modal'), closeModal = document.getElementById('closeModal');
@@ -190,7 +186,7 @@ helpBtn.addEventListener('click', ()=> { modal.style.display='flex'; modal.setAt
 closeModal.addEventListener('click', ()=> { modal.style.display='none'; modal.setAttribute('aria-hidden','true'); });
 modal.addEventListener('click', (e)=> { if(e.target === modal) { modal.style.display='none'; modal.setAttribute('aria-hidden','true'); } });
 
-/* ---------- Migration for old format ---------- */
+/* Migration */
 function migrateColumnsIfNeeded(){
   if(!sheet.columns) sheet.columns = [];
   if(sheet.columns.length && typeof sheet.columns[0] === 'string'){
@@ -204,7 +200,7 @@ function migrateColumnsIfNeeded(){
   }
 }
 
-/* ---------- Load / Save ---------- */
+/* Load / Save */
 async function apiFetch(path, opts={}) {
   opts.headers = opts.headers || {};
   if(!opts.headers['Content-Type']) opts.headers['Content-Type'] = 'application/json';
@@ -213,7 +209,6 @@ async function apiFetch(path, opts={}) {
   if(res.status === 401) { alert('Auth error -- please login again'); doLogout(); }
   return res;
 }
-
 async function loadSheet(){
   if(!username) return alert('login first');
   const res = await apiFetch('/sheet/' + encodeURIComponent(username));
@@ -226,22 +221,11 @@ async function saveSheet(){
   showToast('Saved ✓');
 }
 
-/* ---------- Column helpers ---------- */
-function getNextColumnName(){
-  let max=0;
-  for(const c of sheet.columns){
-    const m = (c.name||'').match(/^Column\s+(\d+)$/i);
-    if(m) max = Math.max(max, parseInt(m[1],10));
-  }
-  return 'Column '+(max+1);
-}
-function pickColorForNewColumn(){
-  const used = new Set(sheet.columns.map(c=>c.color));
-  for(const p of PALETTE) if(!used.has(p)) return p;
-  return PALETTE[Math.floor(Math.random()*PALETTE.length)];
-}
+/* Helpers */
+function getNextColumnName(){ let max=0; for(const c of sheet.columns){ const m = (c.name||'').match(/^Column\s+(\d+)$/i); if(m) max = Math.max(max, parseInt(m[1],10)); } return 'Column '+(max+1); }
+function pickColorForNewColumn(){ const used = new Set(sheet.columns.map(c=>c.color)); for(const p of PALETTE) if(!used.has(p)) return p; return PALETTE[Math.floor(Math.random()*PALETTE.length)]; }
 
-/* ---------- Table rendering ---------- */
+/* Render */
 const sheetTable = document.getElementById('sheetTable');
 
 function renderTable(){
@@ -356,7 +340,7 @@ function renderTable(){
   sheetTable.appendChild(tbody);
 }
 
-/* ---------- Column & row operations ---------- */
+/* Column & row operations */
 function addColumn(){
   const suggested = getNextColumnName();
   const name = prompt('Column name:', suggested);
@@ -385,46 +369,9 @@ function expandAll(){ sheet.rows.forEach(r => { if(!r._sub) r._collapsed = false
 function getNextColumnName(){ let max = 0; for(const c of sheet.columns){ const m = (c.name||'').match(/^Column\s+(\d+)$/i); if(m) max = Math.max(max, parseInt(m[1],10)); } return 'Column '+(max+1); }
 function pickColorForNewColumn(){ const used = new Set(sheet.columns.map(c=>c.color)); for(const p of PALETTE) if(!used.has(p)) return p; return PALETTE[Math.floor(Math.random()*PALETTE.length)]; }
 
-/* ---------- Export Excel: build real .xlsx ZIP (STORE method) ---------- */
-/*
-  Approach:
-  - Build XML files for minimal workbook:
-    [Content_Types].xml
-    _rels/.rels
-    docProps/core.xml
-    docProps/app.xml
-    xl/workbook.xml
-    xl/worksheets/sheet1.xml
-    xl/styles.xml (minimal)
-  - Create ZIP with STORE compression (no compression) by writing proper local file headers + central directory.
-  - CRC32 calculation included.
-  - Trigger download with blob.
-  Notes:
-  - Timestamps are exported as TEXT (user choice).
-*/
+/* ---------- Real XLSX export (fixed: added workbook rels file) ---------- */
 
-function exportXlsx() {
-  // build XMLs (strings)
-  const files = {
-    '[Content_Types].xml': contentTypesXml(),
-    '_rels/.rels': relsRelsXml(),
-    'docProps/core.xml': docPropsCoreXml(),
-    'docProps/app.xml': docPropsAppXml(),
-    'xl/workbook.xml': xlWorkbookXml(),
-    'xl/worksheets/sheet1.xml': xlWorksheetXml(),
-    'xl/styles.xml': xlStylesXml()
-  };
-
-  const zipBlob = zipFiles(files); // returns a Blob
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(zipBlob);
-  a.download = (username || 'sheet') + '.xlsx';
-  a.click();
-  setTimeout(()=> URL.revokeObjectURL(a.href), 60000);
-}
-
-/* --------- XML generators --------- */
-
+/* XML builders */
 function escapeXml(s){ if(s===undefined||s===null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 function contentTypesXml(){
@@ -487,8 +434,15 @@ function xlWorkbookXml(){
 </workbook>`;
 }
 
+/* NEW: workbook relationships (this was missing before) */
+function xlWorkbookRelsXml(){
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+</Relationships>`;
+}
+
 function xlStylesXml(){
-  // minimal styles
   return `<?xml version="1.0" encoding="UTF-8"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
   <fonts count="1"><font><sz val="11"/><color rgb="FF000000"/><name val="Calibri"/></font></fonts>
@@ -500,12 +454,10 @@ function xlStylesXml(){
 }
 
 function xlWorksheetXml(){
-  // Build rows: first header row, then data rows; timestamps are text
   let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
   <sheetData>\n`;
 
-  // header
   xml += '    <row r="1">\n';
   for(let c=0;c<sheet.columns.length;c++){
     const col = sheet.columns[c];
@@ -513,17 +465,12 @@ function xlWorksheetXml(){
   }
   xml += '    </row>\n';
 
-  // data rows (1-based row numbering; header at 1)
   let rr = 2;
   for(const row of sheet.rows){
-    // each row
     xml += `    <row r="${rr}">\n`;
     for(let c=0;c<sheet.columns.length;c++){
       let v = row[c];
-      if(row._sub && c === 1){
-        v = (v ? '↳ ' + v : '↳');
-      }
-      // store everything as inline string to avoid number/date quirks (you requested TEXT timestamps)
+      if(row._sub && c===1) v = (v ? '↳ ' + v : '↳');
       xml += `      <c r="${colLetter(c)}${rr}" t="inlineStr"><is><t>${escapeXml(v===undefined||v===null?'':String(v))}</t></is></c>\n`;
     }
     xml += '    </row>\n';
@@ -535,42 +482,26 @@ function xlWorksheetXml(){
 }
 
 function colLetter(idx){
-  // 0 -> A, 1 -> B ... 25 -> Z, 26 -> AA
-  let s = '';
-  let n = idx + 1;
-  while(n > 0){
-    const rem = (n - 1) % 26;
-    s = String.fromCharCode(65 + rem) + s;
-    n = Math.floor((n - 1) / 26);
-  }
+  let s=''; let n=idx+1;
+  while(n>0){ const rem=(n-1)%26; s = String.fromCharCode(65+rem) + s; n = Math.floor((n-1)/26); }
   return s;
 }
 
-/* ---------- ZIP (STORE method) implementation ---------- */
-/* Minimal ZIP writer that creates a valid zip with uncompressed files.
-   It writes local file headers, central directory, and end record.
-   CRC32 is computed for each file.
-*/
-
+/* ZIP (STORE) implementation (same as before) */
 function zipFiles(filesMap){
-  // filesMap: { "path": "content string", ... }
   const encoder = new TextEncoder();
   const entries = [];
   let offset = 0;
   const parts = [];
 
-  // helper to write little-endian
   function le32(n){ return [n & 0xff, (n>>8)&0xff, (n>>16)&0xff, (n>>24)&0xff]; }
   function le16(n){ return [n & 0xff, (n>>8)&0xff]; }
 
-  // CRC32 table
   const crcTable = (function(){
     const table = new Uint32Array(256);
     for(let i=0;i<256;i++){
       let c = i;
-      for(let k=0;k<8;k++){
-        if(c & 1) c = 0xedb88320 ^ (c >>> 1); else c = c >>> 1;
-      }
+      for(let k=0;k<8;k++) c = (c & 1) ? 0xedb88320 ^ (c >>> 1) : (c >>> 1);
       table[i] = c >>> 0;
     }
     return table;
@@ -578,107 +509,105 @@ function zipFiles(filesMap){
 
   function crc32(buf){
     let crc = 0 ^ (-1);
-    for(let i=0;i<buf.length;i++){
-      crc = (crc >>> 8) ^ crcTable[(crc ^ buf[i]) & 0xff];
-    }
+    for(let i=0;i<buf.length;i++) crc = (crc >>> 8) ^ crcTable[(crc ^ buf[i]) & 0xff];
     return (crc ^ (-1)) >>> 0;
   }
 
-  // Build local file header + data for each file
   for(const name of Object.keys(filesMap)){
-    const contentStr = filesMap[name];
-    // ensure forward slashes for paths
     const filename = name.replace(/\\/g,'/');
-    const data = encoder.encode(contentStr);
+    const data = encoder.encode(filesMap[name]);
     const crc = crc32(data);
     const compressedSize = data.length;
     const uncompressedSize = data.length;
 
-    // local file header
-    // signature 0x04034b50
     const localHeader = new Uint8Array(30 + filename.length);
     let p=0;
-    // signature
     localHeader.set([0x50,0x4b,0x03,0x04], p); p+=4;
-    localHeader.set(le16(20), p); p+=2; // version needed to extract
-    localHeader.set(le16(0), p); p+=2; // general purpose bit flag
-    localHeader.set(le16(0), p); p+=2; // compression method 0 = store
-    localHeader.set(le16(0), p); p+=2; // mod time
-    localHeader.set(le16(0), p); p+=2; // mod date
-    localHeader.set(le32(crc), p); p+=4; // crc32
+    localHeader.set(le16(20), p); p+=2;
+    localHeader.set(le16(0), p); p+=2;
+    localHeader.set(le16(0), p); p+=2;
+    localHeader.set(le16(0), p); p+=2;
+    localHeader.set(le16(0), p); p+=2;
+    localHeader.set(le32(crc), p); p+=4;
     localHeader.set(le32(compressedSize), p); p+=4;
     localHeader.set(le32(uncompressedSize), p); p+=4;
     localHeader.set(le16(filename.length), p); p+=2;
-    localHeader.set(le16(0), p); p+=2; // extra len
-    // filename bytes
+    localHeader.set(le16(0), p); p+=2;
     localHeader.set(encoder.encode(filename), p); p+=filename.length;
 
     parts.push(localHeader);
     parts.push(data);
 
-    entries.push({
-      name: filename,
-      crc,
-      compressedSize,
-      uncompressedSize,
-      localHeaderOffset: offset
-    });
+    entries.push({ name: filename, crc, compressedSize, uncompressedSize, localHeaderOffset: offset });
 
     offset += localHeader.length + data.length;
   }
 
-  // build central directory
   const centralParts = [];
   let cdSize = 0;
   for(const e of entries){
     const filenameBytes = new TextEncoder().encode(e.name);
     const cdfh = new Uint8Array(46 + filenameBytes.length);
     let p=0;
-    // central dir file header signature 0x02014b50
     cdfh.set([0x50,0x4b,0x01,0x02], p); p+=4;
-    cdfh.set(le16(0x033f), p); p+=2; // version made by (just a number)
-    cdfh.set(le16(20), p); p+=2; // version needed
-    cdfh.set(le16(0), p); p+=2; // flags
-    cdfh.set(le16(0), p); p+=2; // method
-    cdfh.set(le16(0), p); p+=2; // mt
-    cdfh.set(le16(0), p); p+=2; // md
+    cdfh.set(le16(0x033f), p); p+=2;
+    cdfh.set(le16(20), p); p+=2;
+    cdfh.set(le16(0), p); p+=2;
+    cdfh.set(le16(0), p); p+=2;
+    cdfh.set(le16(0), p); p+=2;
     cdfh.set(le32(e.crc), p); p+=4;
     cdfh.set(le32(e.compressedSize), p); p+=4;
     cdfh.set(le32(e.uncompressedSize), p); p+=4;
     cdfh.set(le16(filenameBytes.length), p); p+=2;
-    cdfh.set(le16(0), p); p+=2; // extra
-    cdfh.set(le16(0), p); p+=2; // file comment length
-    cdfh.set(le16(0), p); p+=2; // disk number start
-    cdfh.set(le16(0), p); p+=2; // internal attrs
-    cdfh.set(le32(0), p); p+=4; // external attrs
+    cdfh.set(le16(0), p); p+=2;
+    cdfh.set(le16(0), p); p+=2;
+    cdfh.set(le16(0), p); p+=2;
+    cdfh.set(le16(0), p); p+=2;
+    cdfh.set(le32(0), p); p+=4;
     cdfh.set(le32(e.localHeaderOffset), p); p+=4;
     cdfh.set(filenameBytes, p); p+=filenameBytes.length;
     centralParts.push(cdfh);
     cdSize += cdfh.length;
   }
 
-  // end of central dir
   const cdOffset = offset;
   const eocd = new Uint8Array(22);
   let q=0;
-  eocd.set([0x50,0x4b,0x05,0x06], q); q+=4; // signature
-  eocd.set(le16(0), q); q+=2; // disk number
-  eocd.set(le16(0), q); q+=2; // cd start disk
-  eocd.set(le16(entries.length), q); q+=2; // entries on this disk
-  eocd.set(le16(entries.length), q); q+=2; // total entries
-  eocd.set(le32(cdSize), q); q+=4; // central dir size
-  eocd.set(le32(cdOffset), q); q+=4; // central dir offset
-  eocd.set(le16(0), q); q+=2; // comment length
+  eocd.set([0x50,0x4b,0x05,0x06], q); q+=4;
+  eocd.set(le16(0), q); q+=2;
+  eocd.set(le16(0), q); q+=2;
+  eocd.set(le16(entries.length), q); q+=2;
+  eocd.set(le16(entries.length), q); q+=2;
+  eocd.set(le32(cdSize), q); q+=4;
+  eocd.set(le32(cdOffset), q); q+=4;
+  eocd.set(le16(0), q); q+=2;
 
-  // combine all parts into one blob
   const all = [...parts, ...centralParts, eocd];
   return new Blob(all, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 }
 
-/* ---------- Wire export button ---------- */
-document.getElementById('exportXlsBtn').addEventListener('click', exportXlsx);
+/* Build files map and export */
+function exportXlsx(){
+  const files = {
+    '[Content_Types].xml': contentTypesXml(),
+    '_rels/.rels': relsRelsXml(),
+    'docProps/core.xml': docPropsCoreXml(),
+    'docProps/app.xml': docPropsAppXml(),
+    'xl/workbook.xml': xlWorkbookXml(),
+    'xl/_rels/workbook.xml.rels': xlWorkbookRelsXml(), // <-- IMPORTANT fixed file
+    'xl/worksheets/sheet1.xml': xlWorksheetXml(),
+    'xl/styles.xml': xlStylesXml()
+  };
 
-/* ---------- JSON export/import ---------- */
+  const blob = zipFiles(files);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (username || 'sheet') + '.xlsx';
+  a.click();
+  setTimeout(()=> URL.revokeObjectURL(a.href), 60000);
+}
+
+/* JSON export/import bindings */
 document.getElementById('exportBtn').addEventListener('click', ()=> {
   const blob = new Blob([JSON.stringify(sheet,null,2)], { type: 'application/json' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = (username||'sheet') + '.json'; a.click();
@@ -686,17 +615,11 @@ document.getElementById('exportBtn').addEventListener('click', ()=> {
 document.getElementById('importFile').addEventListener('change', (ev)=> {
   const f = ev.target.files[0]; if(!f) return;
   const fr = new FileReader();
-  fr.onload = (e) => {
-    try {
-      const obj = JSON.parse(e.target.result);
-      if(!obj.columns || !obj.rows) throw new Error('invalid format');
-      sheet = obj; migrateColumnsIfNeeded(); renderTable();
-    } catch(err){ alert('Import error: ' + err.message); }
-  };
+  fr.onload = (e)=> { try { const obj = JSON.parse(e.target.result); if(!obj.columns || !obj.rows) throw new Error('invalid format'); sheet = obj; migrateColumnsIfNeeded(); renderTable(); } catch(err){ alert('Import error: ' + err.message); } };
   fr.readAsText(f);
 });
 
-/* ---------- Keyboard shortcuts ---------- */
+/* keyboard shortcuts */
 window.addEventListener('keydown', (e)=>{
   const meta = (navigator.platform.indexOf('Mac')>=0 ? e.metaKey : e.ctrlKey);
   if(meta && e.key.toLowerCase() === 's'){ e.preventDefault(); saveSheet(); }
@@ -708,7 +631,8 @@ window.addEventListener('keydown', (e)=>{
   if(meta && e.shiftKey && e.key.toLowerCase() === 'o'){ e.preventDefault(); expandAll(); }
 });
 
-/* ---------- Button bindings ---------- */
+/* Button bindings */
+document.getElementById('exportXlsBtn').addEventListener('click', exportXlsx);
 document.getElementById('addRowBtn').addEventListener('click', addRow);
 document.getElementById('addColBtn').addEventListener('click', addColumn);
 document.getElementById('delColBtn').addEventListener('click', ()=> { if(!confirm('Delete last column?')) return; deleteColumn(sheet.columns.length-1); });
@@ -716,7 +640,7 @@ document.getElementById('saveBtn').addEventListener('click', saveSheet);
 document.getElementById('collapseAllBtn').addEventListener('click', collapseAll);
 document.getElementById('expandAllBtn').addEventListener('click', expandAll);
 
-/* ---------- Init ---------- */
+/* Init */
 (async function init(){
   if(!sheet.rows || sheet.rows.length === 0){
     const r = [ nowISO(), '', '' ]; r._id = uid(); r._collapsed=false; r._sub=false; sheet.rows=[r];
