@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>LightTaskSheet -- Columns & Types</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>LightTaskSheet -- Keyboard + Excel</title>
 <style>
 :root{
   --bg:#f6fbff; --card:#ffffff; --muted:#6b7280; --accent:#2563eb;
@@ -17,61 +17,56 @@ body{
   background:linear-gradient(180deg,#fbfdff,var(--bg)); color:#0f172a;
 }
 
-/* header */
-.app-header{
-  display:flex; gap:12px; align-items:center; padding:12px 14px;
-  border-radius:var(--radius); background:var(--card); border:1px solid var(--border);
-  box-shadow:var(--shadow);
-}
+/* Header */
+.app-header{ display:flex; gap:12px; align-items:center; padding:12px 14px; border-radius:var(--radius); background:var(--card); border:1px solid var(--border); box-shadow:var(--shadow); }
 .app-title{ margin:0; font-weight:700; font-size:1.05rem; }
-.spacer{flex:1}
+.spacer{ flex:1; }
 .username-tag{ font-size:14px; color:var(--muted); padding:4px 8px; background:#eef6ff; border-radius:6px; display:none; }
 
-/* controls */
+/* Controls */
 .controls{ margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
 .btn{ padding:8px 12px; border-radius:8px; border:0; cursor:pointer; font-weight:600; }
-.btn.primary{ background:var(--accent); color:white }
+.btn.primary{ background:var(--accent); color:white; }
 .btn.ghost{ background:white; color:var(--muted); border:1px solid #dfe9f5; }
 
-/* sheet */
-.sheet-card{ margin-top:12px; border-radius:12px; background:var(--card); border:1px solid var(--border); box-shadow:var(--shadow); padding:8px; overflow:auto; max-height:72vh; }
+/* Sheet */
+.sheet-card{ margin-top:12px; border-radius:12px; background:var(--card); border:1px solid var(--border); box-shadow:var(--shadow); padding:0; overflow:auto; max-height:72vh; position:relative; }
 table.sheet{ width:100%; border-collapse:collapse; table-layout:fixed; min-width:640px; }
-table.sheet th{ position:relative; padding:8px 12px; background:#f5f9ff; color:var(--muted); font-weight:700; border-bottom:1px solid #eef7fc; vertical-align:middle; user-select:none; }
-table.sheet td{ padding:10px 12px; border-bottom:1px solid #f4f9fd; vertical-align:top; word-break:break-word; }
+table.sheet thead th{ position:sticky; top:0; z-index:3; padding:8px 12px; background:#f5f9ff; color:var(--muted); font-weight:700; border-bottom:1px solid #eef7fc; vertical-align:middle; }
+table.sheet td{ padding:10px 12px; border-bottom:1px solid #f4f9fd; vertical-align:top; word-break:break-word; background:white; }
 
-/* header controls layout */
-.col-header { display:flex; gap:8px; align-items:center; }
-.col-title { flex:1; cursor:grab; padding:4px 6px; border-radius:6px; }
-.col-actions { display:flex; gap:6px; align-items:center; }
-.color-chip { width:var(--chip-size); height:var(--chip-size); border-radius:4px; border:1px solid rgba(0,0,0,0.06); cursor:pointer; }
-.type-select { font-size:12px; padding:4px; border-radius:6px; }
+/* Header elements */
+.col-header{ display:flex; gap:8px; align-items:center; }
+.col-title{ flex:1; cursor:grab; padding:4px 6px; border-radius:6px; }
+.color-chip{ width:var(--chip-size); height:var(--chip-size); border-radius:4px; border:1px solid rgba(0,0,0,0.06); cursor:pointer; }
+.type-select{ font-size:12px; padding:4px; border-radius:6px; }
 
-/* collapse button & sub-row visuals */
-.collapse-btn{ background:transparent; border:0; cursor:pointer; font-size:16px; color:var(--muted) }
-.sub-row td { padding-left:28px !important; background:#fbfcff; }
-.sub-prefix { font-weight:600; margin-right:6px; color:#555; }
+/* sub-row visuals */
+.sub-row td{ padding-left:28px !important; background:#fbfcff; }
+.sub-prefix{ font-weight:600; margin-right:6px; color:#555; }
 
 /* tags */
-.tag { display:inline-block; padding:2px 6px; border-radius:999px; font-size:12px; margin:2px 4px 2px 0; background:#eef7ff; color:#0452a5; border:1px solid rgba(4,82,165,0.06); }
+.tag{ display:inline-block; padding:2px 6px; border-radius:999px; font-size:12px; margin:2px 4px 2px 0; background:#eef7ff; color:#0452a5; border:1px solid rgba(4,82,165,0.06); }
 
 /* drag placeholder */
-.drag-placeholder { outline: 2px dashed rgba(0,0,0,0.08); background: rgba(0,0,0,0.02); }
+.drag-placeholder{ outline:2px dashed rgba(0,0,0,0.08); background:rgba(0,0,0,0.02); }
 
 /* toast */
 .toast{ position:fixed; top:22px; right:22px; background:#042A65; color:white; padding:10px 14px; border-radius:10px; display:none; z-index:9999; }
 
-/* small screens */
+/* responsive */
 @media (max-width:720px){
-  .app-header{ flex-direction:column; align-items:stretch; gap:8px }
+  .app-header{ flex-direction:column; align-items:stretch; gap:8px; }
+  .col-title{ cursor:default; }
 }
 </style>
 </head>
 <body>
 
-<header class="app-header" role="banner">
+<header class="app-header">
   <h1 class="app-title">LightTaskSheet</h1>
   <div class="spacer"></div>
-  <div id="userTag" class="username-tag" aria-hidden="true"></div>
+  <span id="userTag" class="username-tag"></span>
 
   <div style="display:flex;gap:8px;align-items:center">
     <input id="username" placeholder="username" style="padding:8px;border-radius:6px;border:1px solid #e9f1fb" />
@@ -82,22 +77,25 @@ table.sheet td{ padding:10px 12px; border-bottom:1px solid #f4f9fd; vertical-ali
   </div>
 </header>
 
-<div class="controls" role="toolbar">
+<div class="controls">
   <button id="addRowBtn" class="btn ghost">+ Add row</button>
   <button id="addColBtn" class="btn ghost">+ Add column</button>
   <button id="delColBtn" class="btn ghost">Delete last column</button>
   <button id="saveBtn" class="btn primary">Save</button>
+  <button id="collapseAllBtn" class="btn ghost">Collapse All</button>
+  <button id="expandAllBtn" class="btn ghost">Expand All</button>
 
   <button id="exportBtn" class="btn ghost">Export JSON</button>
+  <button id="exportXlsBtn" class="btn ghost">Export Excel</button>
   <input id="importFile" type="file" accept="application/json" style="margin-left:8px" />
-  <div style="margin-left:auto;color:#6b7280">Auto timestamps • Drag headers to reorder • Column types</div>
+  <div style="margin-left:auto;color:#6b7280">Shortcuts: ⌘/Ctrl+S Save • ⌘+E Export • ⌘+⇧+E Excel</div>
 </div>
 
-<main class="sheet-card" role="main">
+<main class="sheet-card">
   <table id="sheetTable" class="sheet" aria-label="task sheet"></table>
 </main>
 
-<div id="toast" class="toast" role="status" aria-live="polite">Saved ✓</div>
+<div id="toast" class="toast">Saved ✓</div>
 
 <script>
 /* ----------------------
@@ -105,20 +103,16 @@ table.sheet td{ padding:10px 12px; border-bottom:1px solid #f4f9fd; vertical-ali
    ---------------------- */
 const API = '/api';
 const TOKEN_KEY = 'lts_token', USER_KEY = 'lts_user';
-const PALETTE = ['#ffd8a8','#c6f6d5','#dbeafe','#fde68a','#fbcfe8','#e6e6fa','#d1fae5','#fce7f3']; // colors
+const PALETTE = ['#ffd8a8','#c6f6d5','#dbeafe','#fde68a','#fbcfe8','#e6e6fa','#d1fae5','#fce7f3'];
 
 let token = localStorage.getItem(TOKEN_KEY) || null;
 let username = localStorage.getItem(USER_KEY) || null;
 
-/* Sheet structure:
-  sheet = {
-    columns: [{name, type, color}],   // type: text|date|number|tags
-    rows: [ [ts, val2, val3... , _id?, _sub?, _parent?, _collapsed?], ... ]
-  }
-  Backward compatibility: if columns are strings, migrate to objects on load.
-*/
-
-let sheet = { columns: [ {name:'Timestamp',type:'date',color:'#f5f7ff'}, {name:'Task',type:'text',color:'#fff7ed'}, {name:'Notes',type:'text',color:'#eef7ff'} ], rows: [] };
+/* sheet: columns are objects {name,type,color} */
+let sheet = {
+  columns: [ {name:'Timestamp',type:'date',color:PALETTE[2]}, {name:'Task',type:'text',color:PALETTE[0]}, {name:'Notes',type:'text',color:PALETTE[1]} ],
+  rows: []
+};
 
 function nowISO(){ return new Date().toISOString(); }
 function fmtLocal(iso){ if(!iso) return ''; try { return new Date(iso).toLocaleString(); } catch(e){ return iso; } }
@@ -126,20 +120,17 @@ function uid(){ return Date.now().toString(36)+'-'+Math.random().toString(36).sl
 function showToast(msg='Saved ✓'){ const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; clearTimeout(t._t); t._t=setTimeout(()=>t.style.display='none',1200); }
 
 /* ----------------------
-   Auth UI
+   Auth
    ---------------------- */
-const usernameInput = document.getElementById('username');
-const passwordInput = document.getElementById('password');
-const loginBtn = document.getElementById('loginBtn');
-const registerBtn = document.getElementById('registerBtn');
-const logoutBtn = document.getElementById('logoutBtn');
+const usernameInput = document.getElementById('username'), passwordInput = document.getElementById('password');
+const loginBtn = document.getElementById('loginBtn'), registerBtn = document.getElementById('registerBtn'), logoutBtn = document.getElementById('logoutBtn');
 const userTag = document.getElementById('userTag');
 
 function updateAuthUI(){
   if(username){
     usernameInput.style.display='none'; passwordInput.style.display='none';
     loginBtn.style.display='none'; registerBtn.style.display='none'; logoutBtn.style.display='';
-    userTag.style.display='inline-block'; userTag.textContent = username;
+    userTag.style.display='inline-block'; userTag.textContent=username;
   } else {
     usernameInput.style.display=''; passwordInput.style.display='';
     loginBtn.style.display=''; registerBtn.style.display=''; logoutBtn.style.display='none';
@@ -148,51 +139,44 @@ function updateAuthUI(){
 }
 updateAuthUI();
 
-async function apiFetch(path, opts={}){
+async function apiFetch(path, opts={}) {
   opts.headers = opts.headers || {};
   if(!opts.headers['Content-Type']) opts.headers['Content-Type']='application/json';
-  if(token) opts.headers['Authorization'] = 'Bearer '+token;
-  const res = await fetch(API+path, opts);
+  if(token) opts.headers['Authorization'] = 'Bearer ' + token;
+  const res = await fetch(API + path, opts);
   if(res.status === 401){ alert('Auth error -- login again'); doLogout(); }
   return res;
 }
 
 /* ----------------------
-   Login / Register / Logout
+   Login/Register/Logout
    ---------------------- */
 loginBtn.addEventListener('click', async ()=>{
   const u = usernameInput.value.trim(), p = passwordInput.value;
-  if(!u||!p) return alert('username & password required');
-  const r = await fetch(API+'/login',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username:u,password:p})});
-  const j = await r.json();
-  if(!r.ok) return alert('Login failed: '+(j.error||r.statusText));
-  token = j.token; username = j.username;
-  localStorage.setItem(TOKEN_KEY, token); localStorage.setItem(USER_KEY, username);
+  if(!u||!p) return alert('username & password');
+  const r = await fetch(API + '/login',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username:u,password:p})});
+  const j = await r.json(); if(!r.ok) return alert('Login failed: ' + (j.error || r.statusText));
+  token = j.token; username = j.username; localStorage.setItem(TOKEN_KEY,token); localStorage.setItem(USER_KEY,username);
   updateAuthUI(); await loadSheet();
 });
-
 registerBtn.addEventListener('click', async ()=>{
   const u = usernameInput.value.trim(), p = passwordInput.value;
-  if(!u||!p) return alert('username & password required');
-  const r = await fetch(API+'/register',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username:u,password:p})});
-  const j = await r.json();
-  if(!r.ok) return alert('Register failed: '+(j.error||r.statusText));
-  alert('User created -- please login.');
+  if(!u||!p) return alert('username & password');
+  const r = await fetch(API + '/register',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username:u,password:p})});
+  if(!r.ok) return alert('Register failed'); alert('User created -- please login.');
 });
-
 logoutBtn.addEventListener('click', ()=> doLogout());
-function doLogout(){ token=null; username=null; localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); updateAuthUI(); sheet = { columns: sheet.columns, rows: [] }; renderTable(); }
+function doLogout(){ token=null; username=null; localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); updateAuthUI(); sheet.rows = []; renderTable(); }
 
 /* ----------------------
-   Migration helper (old format -> new)
+   Migration for older format
    ---------------------- */
 function migrateColumnsIfNeeded(){
-  // if sheet.columns is array of strings, convert to objects
+  if(!sheet.columns) sheet.columns = [];
   if(sheet.columns.length && typeof sheet.columns[0] === 'string'){
     const old = sheet.columns.slice();
-    sheet.columns = old.map((name, idx) => ({ name: name || ('Column '+(idx+1)), type: 'text', color: PALETTE[idx % PALETTE.length] }));
+    sheet.columns = old.map((name, i) => ({ name: name || ('Column '+(i+1)), type: 'text', color: PALETTE[i % PALETTE.length] }));
   } else {
-    // ensure every column has type and color
     sheet.columns = sheet.columns.map((c,i) => {
       if(typeof c === 'string') return { name: c, type: 'text', color: PALETTE[i % PALETTE.length] };
       return { name: c.name || ('Column '+(i+1)), type: c.type || 'text', color: c.color || PALETTE[i % PALETTE.length] };
@@ -205,42 +189,74 @@ function migrateColumnsIfNeeded(){
    ---------------------- */
 async function loadSheet(){
   if(!username) return alert('login first');
-  const res = await apiFetch('/sheet/'+encodeURIComponent(username));
+  const res = await apiFetch('/sheet/' + encodeURIComponent(username));
   const j = await res.json();
-  if(!j.sheet) return;
-  sheet = j.sheet;
-  migrateColumnsIfNeeded();
-  // ensure each row is an array; older exports may have object rows -- handle lightly
-  if(!Array.isArray(sheet.rows)) sheet.rows = [];
-  renderTable();
+  if(j.sheet){ sheet = j.sheet; migrateColumnsIfNeeded(); renderTable(); }
 }
-
-async function saveSheet(){
-  // normalize columns to simple objects for storage
-  await apiFetch('/sheet/'+encodeURIComponent(username), { method:'POST', body: JSON.stringify({ sheet }) });
-  showToast('Saved ✓');
-}
+async function saveSheet(){ if(!username) return alert('login first'); await apiFetch('/sheet/' + encodeURIComponent(username), { method:'POST', body: JSON.stringify({ sheet }) }); showToast('Saved ✓'); }
 
 /* ----------------------
-   Column helpers
+   Column helpers & operations
    ---------------------- */
 function getNextColumnName(){
   let max = 0;
   for(const c of sheet.columns){
-    const m = c.name.match(/^Column\s+(\d+)$/i);
+    const m = (c.name||'').match(/^Column\s+(\d+)$/i);
     if(m) max = Math.max(max, parseInt(m[1],10));
   }
   return 'Column '+(max+1);
 }
-function pickColorForNewColumn(){
-  // pick a color that isn't used yet (simple approach)
-  const used = new Set(sheet.columns.map(c=>c.color));
-  for(const p of PALETTE) if(!used.has(p)) return p;
-  return PALETTE[Math.floor(Math.random()*PALETTE.length)];
+function pickColorForNewColumn(){ const used = new Set(sheet.columns.map(c=>c.color)); for(const p of PALETTE) if(!used.has(p)) return p; return PALETTE[Math.floor(Math.random()*PALETTE.length)]; }
+
+function addColumn(){
+  const suggested = getNextColumnName();
+  const name = prompt('Column name:', suggested);
+  if(name === null) return;
+  const col = { name: name.trim() || suggested, type: 'text', color: pickColorForNewColumn() };
+  sheet.columns.push(col);
+  sheet.rows.forEach(r => r.push(''));
+  renderTable();
+}
+function deleteColumn(index){
+  if(sheet.columns.length <= 1) return alert('Cannot delete all columns');
+  if(!confirm('Delete column "'+sheet.columns[index].name+'"? This will remove data from every row.')) return;
+  sheet.columns.splice(index,1);
+  sheet.rows.forEach(r => r.splice(index,1));
+  renderTable();
+}
+function reorderColumns(from,to){
+  const col = sheet.columns.splice(from,1)[0]; sheet.columns.splice(to,0,col);
+  sheet.rows.forEach(r => { const cell = r.splice(from,1)[0]; r.splice(to,0,cell); });
+  renderTable();
 }
 
 /* ----------------------
-   Render table & headers (drag/drop reorder)
+   Row / Sub-row operations
+   ---------------------- */
+function addRow(){
+  const r = [ nowISO(), '', '' ]; r._id = uid(); r._collapsed = false; r._sub = false;
+  sheet.rows.push(r); renderTable();
+}
+function addSubRow(parentIndex){
+  const parent = sheet.rows[parentIndex]; if(!parent) return;
+  const s = [ nowISO(), '', '' ]; s._id = uid(); s._sub = true; s._parent = parent._id;
+  sheet.rows.splice(parentIndex+1,0,s); renderTable();
+}
+
+/* ----------------------
+   Collapse / Expand all
+   ---------------------- */
+function collapseAll(){
+  sheet.rows.forEach(r => { if(!r._sub) r._collapsed = true; });
+  renderTable();
+}
+function expandAll(){
+  sheet.rows.forEach(r => { if(!r._sub) r._collapsed = false; });
+  renderTable();
+}
+
+/* ----------------------
+   Render table + headers, with drag reorder
    ---------------------- */
 const sheetTable = document.getElementById('sheetTable');
 
@@ -253,101 +269,50 @@ function renderTable(){
   const trh = document.createElement('tr');
 
   sheet.columns.forEach((col, colIndex) => {
-    const th = document.createElement('th');
-    th.dataset.colIndex = colIndex;
+    const th = document.createElement('th'); th.dataset.colIndex = colIndex;
 
-    // header content
-    const header = document.createElement('div');
-    header.className = 'col-header';
+    const header = document.createElement('div'); header.className = 'col-header';
 
-    const title = document.createElement('div');
-    title.className = 'col-title';
-    title.textContent = col.name || '';
-    title.title = 'Drag to reorder';
-    title.draggable = true;
+    const title = document.createElement('div'); title.className = 'col-title'; title.textContent = col.name || ''; title.draggable = true;
     header.appendChild(title);
 
-    // color chip
-    const chip = document.createElement('div');
-    chip.className = 'color-chip';
-    chip.style.background = col.color || '#eee';
-    chip.title = 'Click to change color';
-    chip.addEventListener('click', ()=> {
-      // cycle palette
-      const idx = PALETTE.indexOf(col.color);
-      const next = PALETTE[(idx+1+PALETTE.length) % PALETTE.length];
-      col.color = next;
-      renderTable();
-    });
+    const chip = document.createElement('div'); chip.className = 'color-chip'; chip.style.background = col.color || '#eee';
+    chip.title = 'Click to cycle color'; chip.addEventListener('click', ()=> { const idx = PALETTE.indexOf(col.color); col.color = PALETTE[(idx+1+PALETTE.length)%PALETTE.length]; renderTable(); });
     header.appendChild(chip);
 
-    // type selector
-    const select = document.createElement('select');
-    select.className = 'type-select';
-    ['text','date','number','tags'].forEach(t=>{
-      const o = document.createElement('option'); o.value=t; o.textContent=t; if(col.type===t) o.selected=true; select.appendChild(o);
-    });
+    const select = document.createElement('select'); select.className = 'type-select';
+    ['text','date','number','tags'].forEach(t=>{ const o=document.createElement('option'); o.value=t; o.textContent=t; if(col.type===t) o.selected=true; select.appendChild(o); });
     select.addEventListener('change', ()=> { col.type = select.value; renderTable(); });
     header.appendChild(select);
 
-    // actions
-    const actions = document.createElement('div');
-    actions.className = 'col-actions';
-
-    // delete button
-    const del = document.createElement('button');
-    del.className = 'btn ghost';
-    del.style.padding='6px';
-    del.textContent = '🗑';
-    del.title = 'Delete column';
-    del.addEventListener('click', ()=>{
-      if(!confirm('Delete column "'+col.name+'"? This will remove data from every row.')) return;
-      deleteColumn(colIndex);
-    });
+    const actions = document.createElement('div'); actions.style.marginLeft='6px';
+    const del = document.createElement('button'); del.className='btn ghost'; del.style.padding='6px'; del.textContent='🗑'; del.title='Delete column';
+    del.addEventListener('click', ()=> deleteColumn(colIndex));
     actions.appendChild(del);
-
     header.appendChild(actions);
+
     th.appendChild(header);
 
-    // drag events (reorder columns)
-    title.addEventListener('dragstart', (e)=>{
-      e.dataTransfer.setData('text/plain', String(colIndex));
-      e.dataTransfer.effectAllowed = 'move';
-      th.classList.add('dragging');
-    });
-    title.addEventListener('dragend', (e)=>{
-      document.querySelectorAll('th').forEach(x=>x.classList.remove('dragging','drag-over'));
-    });
-    th.addEventListener('dragover', (e)=>{
-      e.preventDefault();
-      th.classList.add('drag-over');
-    });
-    th.addEventListener('dragleave', (e)=> th.classList.remove('drag-over'));
-    th.addEventListener('drop', (e)=>{
-      e.preventDefault();
-      const from = parseInt(e.dataTransfer.getData('text/plain'),10);
-      const to = parseInt(th.dataset.colIndex,10);
-      if(!isNaN(from) && !isNaN(to) && from !== to) reorderColumns(from, to);
-    });
+    // drag handlers
+    title.addEventListener('dragstart', (e)=> { e.dataTransfer.setData('text/plain', String(colIndex)); e.dataTransfer.effectAllowed='move'; th.classList.add('dragging'); });
+    title.addEventListener('dragend', ()=> { document.querySelectorAll('th').forEach(x=>x.classList.remove('dragging','drag-over')); });
+    th.addEventListener('dragover', (e)=> { e.preventDefault(); th.classList.add('drag-over'); });
+    th.addEventListener('dragleave', ()=> th.classList.remove('drag-over'));
+    th.addEventListener('drop', (e)=> { e.preventDefault(); const from = parseInt(e.dataTransfer.getData('text/plain'),10); const to = parseInt(th.dataset.colIndex,10); if(!isNaN(from) && !isNaN(to) && from!==to) reorderColumns(from,to); });
 
     trh.appendChild(th);
   });
 
-  // actions header
-  const thx = document.createElement('th'); thx.textContent=''; trh.appendChild(thx);
-  thead.appendChild(trh);
-  sheetTable.appendChild(thead);
+  const thActions = document.createElement('th'); thActions.textContent = ''; trh.appendChild(thActions);
+  thead.appendChild(trh); sheetTable.appendChild(thead);
 
   // body
   const tbody = document.createElement('tbody');
-
-  // build collapsed map for parents
-  const collapsed = {};
-  sheet.rows.forEach(r => { if(!r._sub && r._id) collapsed[r._id] = !!r._collapsed; });
+  const collapsed = {}; sheet.rows.forEach(r => { if(!r._sub && r._id) collapsed[r._id] = !!r._collapsed; });
 
   for(let i=0;i<sheet.rows.length;i++){
     const row = sheet.rows[i];
-    if(row._sub && row._parent && collapsed[row._parent]) continue; // hidden
+    if(row._sub && row._parent && collapsed[row._parent]) continue;
 
     const tr = document.createElement('tr'); if(row._sub) tr.classList.add('sub-row');
 
@@ -355,91 +320,55 @@ function renderTable(){
       const col = sheet.columns[ci];
       const td = document.createElement('td');
 
-      // render by type
       if(ci===0){
         td.textContent = row[0] ? fmtLocal(row[0]) : '';
       } else {
-        // editing controls differ by type
         if(col.type === 'date'){
           const inp = document.createElement('input'); inp.type='datetime-local';
-          // convert ISO to local datetime-local format if present
-          if(row[ci]) {
-            try {
-              const d = new Date(row[ci]);
-              const pad = (n)=>String(n).padStart(2,'0');
-              const isoLocal = d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes());
-              inp.value = isoLocal;
-            } catch(e){}
-          }
-          inp.addEventListener('change', ()=> {
-            const v = inp.value;
-            if(v) row[ci] = new Date(v).toISOString(); else row[ci] = '';
-          });
+          if(row[ci]){ try { const d = new Date(row[ci]); const pad=(n)=>String(n).padStart(2,'0'); inp.value = d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes()); } catch(e){} }
+          inp.addEventListener('change', ()=> row[ci] = inp.value ? new Date(inp.value).toISOString() : '');
           td.appendChild(inp);
         } else if(col.type === 'number'){
-          const inp = document.createElement('input'); inp.type='number';
-          inp.value = (row[ci] !== undefined && row[ci] !== null) ? row[ci] : '';
+          const inp = document.createElement('input'); inp.type='number'; inp.value = row[ci] !== undefined ? row[ci] : '';
           inp.addEventListener('input', ()=> { const n = parseFloat(inp.value); row[ci] = isNaN(n) ? '' : n; });
           td.appendChild(inp);
         } else if(col.type === 'tags'){
-          // display tags as chips; editing is a simple input
-          const wrap = document.createElement('div');
-          wrap.style.display='flex'; wrap.style.flexWrap='wrap'; wrap.style.gap='4px';
+          const wrap = document.createElement('div'); wrap.style.display='flex'; wrap.style.flexWrap='wrap'; wrap.style.gap='4px';
           const tags = Array.isArray(row[ci]) ? row[ci] : (row[ci] ? String(row[ci]).split(',').map(s=>s.trim()).filter(Boolean) : []);
-          tags.forEach(t => {
-            const el = document.createElement('span'); el.className='tag'; el.textContent = t; wrap.appendChild(el);
-          });
-          const inp = document.createElement('input'); inp.type='text'; inp.placeholder='add,comma,separated';
+          tags.forEach(t => { const el = document.createElement('span'); el.className='tag'; el.textContent = t; wrap.appendChild(el); });
+          const inp = document.createElement('input'); inp.type='text'; inp.placeholder='tag1,tag2';
           inp.style.marginTop='6px'; inp.style.width='100%';
-          inp.addEventListener('change', ()=> {
-            const arr = String(inp.value).split(',').map(s=>s.trim()).filter(Boolean);
-            row[ci] = arr;
-            renderTable();
-          });
+          inp.addEventListener('change', ()=> { row[ci] = String(inp.value).split(',').map(s=>s.trim()).filter(Boolean); renderTable(); });
           td.appendChild(wrap); td.appendChild(inp);
-        } else { // text
-          // contenteditable for text for quick typing
+        } else {
           const span = document.createElement('div'); span.contentEditable = true; span.style.minHeight='24px';
-          // for sub-row show prefix visually for Task column (colIndex 1 is Task)
-          if(row._sub && ci === 1){
+          if(row._sub && ci===1){
             const prefix = document.createElement('span'); prefix.className='sub-prefix'; prefix.textContent='↳';
             span.appendChild(prefix);
-            const contentSpan = document.createElement('span'); contentSpan.textContent = row[ci] || '';
-            span.appendChild(contentSpan);
-            span.addEventListener('input', ()=> {
-              // merge: remove prefix when extracting text
-              const text = span.innerText.replace('↳','').trim();
-              row[ci] = text;
-            });
+            const content = document.createElement('span'); content.textContent = row[ci] || '';
+            span.appendChild(content);
+            span.addEventListener('input', ()=> { const text = span.innerText.replace('↳','').trim(); row[ci] = text; });
           } else {
-            span.innerText = row[ci] || '';
-            span.addEventListener('input', ()=> row[ci] = span.innerText);
+            span.innerText = row[ci] || ''; span.addEventListener('input', ()=> row[ci] = span.innerText);
           }
           td.appendChild(span);
         }
       }
-
       tr.appendChild(td);
     }
 
-    // actions cell
-    const act = document.createElement('td');
-    const container = document.createElement('div'); container.style.display='flex'; container.style.alignItems='center'; container.style.gap='8px';
-
+    // actions
+    const act = document.createElement('td'); act.style.display='flex'; act.style.gap='8px'; act.style.alignItems='center';
     if(!row._sub){
-      const collapseBtn = document.createElement('button'); collapseBtn.className='collapse-btn'; collapseBtn.textContent = row._collapsed ? '▸' : '▾';
-      collapseBtn.title = 'Collapse/Expand sub-rows'; collapseBtn.addEventListener('click', ()=> { row._collapsed = !row._collapsed; renderTable(); });
-      container.appendChild(collapseBtn);
-
+      const collapseBtn = document.createElement('button'); collapseBtn.className='btn ghost'; collapseBtn.style.padding='6px'; collapseBtn.textContent = row._collapsed ? '▸' : '▾'; collapseBtn.title='Collapse/Expand sub-rows';
+      collapseBtn.addEventListener('click', ()=> { row._collapsed = !row._collapsed; renderTable(); });
+      act.appendChild(collapseBtn);
       const addSub = document.createElement('button'); addSub.className='btn ghost'; addSub.style.padding='6px'; addSub.textContent='+ sub-row';
       addSub.addEventListener('click', ()=> addSubRow(i));
-      container.appendChild(addSub);
+      act.appendChild(addSub);
     } else {
-      const span = document.createElement('div'); span.textContent='sub'; span.style.color='#6b7280'; span.style.fontSize='0.9rem';
-      container.appendChild(span);
+      const small = document.createElement('div'); small.textContent='sub'; small.style.color='#6b7280'; act.appendChild(small);
     }
-
-    act.appendChild(container);
     tr.appendChild(act);
     tbody.appendChild(tr);
   }
@@ -448,118 +377,107 @@ function renderTable(){
 }
 
 /* ----------------------
-   Column operations
+   Exports: JSON + Excel (SpreadsheetML simple)
    ---------------------- */
-function addColumn(){
-  const suggested = getNextColumnName();
-  const name = prompt('Column name:', suggested);
-  if(name === null) return;
-  const col = { name: name.trim() || suggested, type: 'text', color: pickColorForNewColumn() };
-  sheet.columns.push(col);
-  sheet.rows.forEach(r => r.push(''));
-  renderTable();
-}
-function deleteColumn(index){
-  if(sheet.columns.length <= 1) return alert('Cannot delete all columns');
-  sheet.columns.splice(index,1);
-  sheet.rows.forEach(r => { r.splice(index,1); });
-  renderTable();
-}
-function reorderColumns(from, to){
-  // move column object
-  const col = sheet.columns.splice(from,1)[0];
-  sheet.columns.splice(to,0,col);
-  // move each row's data cell
-  sheet.rows.forEach(r => {
-    const cell = r.splice(from,1)[0];
-    r.splice(to,0,cell);
-  });
-  renderTable();
-}
-
-/* ----------------------
-   Row operations
-   ---------------------- */
-function addRow(){
-  const r = [ nowISO(), '', '' ];
-  r._id = uid(); r._collapsed = false; r._sub = false;
-  sheet.rows.push(r); renderTable();
-}
-function addSubRow(parentIndex){
-  const parent = sheet.rows[parentIndex];
-  if(!parent) return;
-  const sub = [ nowISO(), '', '' ]; sub._id = uid(); sub._sub = true; sub._parent = parent._id;
-  sheet.rows.splice(parentIndex+1,0,sub); renderTable();
-}
-
-/* ----------------------
-   Export / Import
-   ---------------------- */
-document.getElementById('exportBtn').addEventListener('click', ()=>{
-  const blob = new Blob([JSON.stringify(sheet, null, 2)], { type:'application/json' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = (username || 'sheet') + '.json'; a.click();
+document.getElementById('exportBtn').addEventListener('click', ()=> {
+  const blob = new Blob([JSON.stringify(sheet,null,2)], { type:'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = (username||'sheet') + '.json'; a.click();
 });
 
+document.getElementById('exportXlsBtn').addEventListener('click', exportExcelSimple);
+
+function exportExcelSimple(){
+  // Build SpreadsheetML XML (Excel 2003 XML Spreadsheet). Excel opens it fine.
+  const ns = 'urn:schemas-microsoft-com:office:spreadsheet';
+  const xmlns = 'xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40"';
+  let xml = '<?xml version="1.0"?>\n';
+  xml += `<Workbook ${xmlns}>\n<Worksheet ss:Name="${escapeXml(username||'Sheet')}">\n<Table>\n`;
+
+  // header row
+  xml += '<Row>\n';
+  sheet.columns.forEach(c => { xml += `<Cell><Data ss:Type="String">${escapeXml(c.name || '')}</Data></Cell>\n`; });
+  xml += '</Row>\n';
+
+  // data rows
+  sheet.rows.forEach(row => {
+    xml += '<Row>\n';
+    for(let ci=0; ci<sheet.columns.length; ci++){
+      let v = row[ci];
+      // present sub-row Task prefix visually
+      if(row._sub && ci === 1){
+        v = (v ? '↳ '+v : '↳');
+      }
+      if(sheet.columns[ci].type === 'number' && v !== undefined && v !== '') {
+        xml += `<Cell><Data ss:Type="Number">${Number(v)}</Data></Cell>\n`;
+      } else {
+        xml += `<Cell><Data ss:Type="String">${escapeXml(v===undefined||v===null?'':String(v))}</Data></Cell>\n`;
+      }
+    }
+    xml += '</Row>\n';
+  });
+
+  xml += '</Table>\n</Worksheet>\n</Workbook>';
+
+  const blob = new Blob([xml], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = (username||'sheet') + '.xlsx'; a.click();
+}
+
+// simple XML escape
+function escapeXml(s){ if(s===undefined||s===null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ----------------------
+   Import JSON
+   ---------------------- */
 document.getElementById('importFile').addEventListener('change', (ev)=>{
   const f = ev.target.files[0]; if(!f) return;
   const fr = new FileReader();
-  fr.onload = (e) => {
+  fr.onload = e => {
     try {
       const obj = JSON.parse(e.target.result);
       if(!obj.columns || !obj.rows) throw new Error('Invalid sheet format');
       sheet = obj; migrateColumnsIfNeeded(); renderTable();
-    } catch(err){ alert('Import error: '+err.message); }
+    } catch(err){ alert('Import error: ' + err.message); }
   };
   fr.readAsText(f);
 });
 
 /* ----------------------
-   Helpers used above
+   Keyboard shortcuts
    ---------------------- */
-function pickColorForNewColumn(){
-  const used = new Set(sheet.columns.map(c => c.color));
-  for(const p of PALETTE) if(!used.has(p)) return p;
-  return PALETTE[Math.floor(Math.random()*PALETTE.length)];
-}
-function getNextColumnName(){
-  let max=0;
-  sheet.columns.forEach(c=>{
-    const m = (c.name||'').match(/^Column\s+(\d+)$/i);
-    if(m) max = Math.max(max, parseInt(m[1],10));
-  });
-  return 'Column '+(max+1);
-}
+window.addEventListener('keydown', (e)=>{
+  const meta = (navigator.platform.indexOf('Mac')>=0 ? e.metaKey : e.ctrlKey);
+  if(meta && e.key.toLowerCase() === 's'){ e.preventDefault(); saveSheet(); }
+  if(meta && !e.shiftKey && e.key.toLowerCase() === 'e'){ e.preventDefault(); document.getElementById('exportBtn').click(); }
+  if(meta && e.shiftKey && e.key.toLowerCase() === 'e'){ e.preventDefault(); exportExcelSimple(); }
+  if(meta && e.key.toLowerCase() === 'n' && !e.shiftKey){ e.preventDefault(); addRow(); }
+  if(meta && e.shiftKey && e.key.toLowerCase() === 'n'){ e.preventDefault(); addColumn(); }
+  if(meta && e.shiftKey && e.key.toLowerCase() === 'c'){ e.preventDefault(); collapseAll(); }
+  if(meta && e.shiftKey && e.key.toLowerCase() === 'o'){ e.preventDefault(); expandAll(); }
+});
 
 /* ----------------------
-   Drag helpers (support touch by delaying dragstart)
-   ---------------------- */
-// (dragstart handlers bound in renderTable to each title element)
-
-/* ----------------------
-   Save / bindings
+   Button bindings
    ---------------------- */
 document.getElementById('addRowBtn').addEventListener('click', addRow);
 document.getElementById('addColBtn').addEventListener('click', addColumn);
 document.getElementById('delColBtn').addEventListener('click', ()=> {
-  if(!confirm('Delete the last column?')) return;
+  if(!confirm('Delete last column?')) return;
   deleteColumn(sheet.columns.length-1);
 });
 document.getElementById('saveBtn').addEventListener('click', saveSheet);
+document.getElementById('collapseAllBtn').addEventListener('click', collapseAll);
+document.getElementById('expandAllBtn').addEventListener('click', expandAll);
 
 /* ----------------------
    Init
    ---------------------- */
 (async function init(){
-  // if nothing in rows, create one parent row
   if(!sheet.rows || sheet.rows.length === 0){
     const r = [ nowISO(), '', '' ]; r._id = uid(); r._collapsed = false; r._sub = false;
     sheet.rows = [ r ];
   }
-  // If token present, try load
-  if(token && username) {
-    updateAuthUI();
-    await loadSheet().catch(()=>{ doLogout(); });
-  } else renderTable();
+  updateAuthUI();
+  if(token && username) await loadSheet(); else renderTable();
 })();
 </script>
 </body>
